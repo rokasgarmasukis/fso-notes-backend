@@ -4,6 +4,27 @@ const morgan = require('morgan')
 const app = express();
 const cors = require('cors')
 
+const mongoose = require("mongoose");
+const res = require("express/lib/response");
+require("dotenv").config();
+
+mongoose.connect(process.env.MONGO_URI);
+
+const noteSchema = new mongoose.Schema({
+  content: String,
+  date: Date,
+  important: Boolean,
+});
+
+noteSchema.set("toJSON", {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
+  }
+})
+
+const Note = mongoose.model("Note", noteSchema);
 
 let notes = [
   {
@@ -45,8 +66,10 @@ app.get("/", (request, response) => {
   response.send("<h1>Hello World!</h1>");
 });
 
-app.get("/api/notes", (request, response) => {
-  response.json(notes);
+app.get("/api/notes", (req, res) => {
+  Note.find().then(notes => {
+    res.json(notes)
+  })
 });
 
 app.get("/api/notes/:id", (req, res) => {
